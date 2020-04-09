@@ -18,7 +18,11 @@ Vue.config.productionTip = false;
 Vue.use(ElementUI);
 
 Vue.use(vuescroll, {
-  ops: {}, // 在这里设置全局默认配置
+  ops: {
+    bar: {
+      background: '#cccccc',
+    },
+  }, // 在这里设置全局默认配置
   name: 'myScroll', // 在这里自定义组件名字，默认是vueScroll
 });
 

@@ -7,7 +7,7 @@
         @search="onSearch"
         enterButton="搜索"
       />
-      <a-button type="primary" class="margin-left">新增</a-button>
+      <a-button type="primary" class="margin-left" @click="addArea">新增</a-button>
     </div>
     <div class="area-page-body">
       <my-scroll>
@@ -17,9 +17,9 @@
         </div>
         <div class="area-page-body-item"
              flex="dir:left cross:center main:justify"
-             v-for="(area, index) in areaList" :key="index">
+             v-for="(area, index) in areaList" :key="index" v-show="area.name.indexOf(content)>=0">
           <a-checkbox @change="onCheckChange(index)" v-model="area.checked"><span class="box-label">{{area.name}}{{area.speed}}</span></a-checkbox>
-          <span class="text-btn">绑定({{area.bindNum}})</span>
+          <span class="text-btn" @click="openBindCarPage(area.id,area.bindCarIdArr)">绑定({{area.bindCarIdArr.length}})</span>
           <span class="opt-btns">
             <a-icon type="edit" @click="editItem(index)"/>
             <a-popconfirm title="确定删除此区域吗？" okText="是" cancelText="否" @confirm="deleteItem(index)">
@@ -42,6 +42,7 @@ export default {
   },
   data() {
     return {
+      content: '',
       searchContent: '',
       indeterminate: false,
       checkAll: false,
@@ -50,7 +51,13 @@ export default {
   },
   computed: {
     totalSize() {
-      return this.areaList.length;
+      const num = this.areaList.reduce((acc, item, arr) => {
+        if (item.name.indexOf(this.content) >= 0) {
+          acc += 1;
+        }
+        return acc;
+      }, 0);
+      return num;
     },
   },
   watch: {
@@ -87,32 +94,32 @@ export default {
       this.areaList = [{
         id: '0001',
         name: '区域A',
-        bindNum: 4,
+        bindCarIdArr: ['0-0-0-2'],
         mapId: '',
       }, {
         id: '0002',
         name: '区域B',
-        bindNum: 5,
+        bindCarIdArr: ['0-0-1-2', '0-0-0-1'],
         mapId: '',
       }, {
         id: '0003',
         name: '区域C',
-        bindNum: 8,
+        bindCarIdArr: ['0-0-3-2'],
         mapId: '',
       }, {
         id: '0004',
         name: '区域D',
-        bindNum: 2,
+        bindCarIdArr: ['0-0-4-2', '0-0-0-2'],
         mapId: '',
       }, {
         id: '0005',
         name: '区域E',
-        bindNum: 0,
+        bindCarIdArr: ['0-0-2-1', '0-0-2-2', '0-0-4-2'],
         mapId: '',
       }, {
         id: '0006',
         name: '区域F',
-        bindNum: 9,
+        bindCarIdArr: ['0-0-2-2', '0-0-1-2'],
         mapId: '',
       }];
       this.areaList.map((item) => {
@@ -124,7 +131,7 @@ export default {
     // 搜索
     onSearch() {
       console.log(`searchContent: ${this.searchContent}`);
-      this.getAreaListData();
+      this.content = this.searchContent.trim();
     },
     // 全选
     onCheckAllChange() {
@@ -162,7 +169,10 @@ export default {
       this.$set(this.areaList, index, this.areaList[index]);
       console.log('this.areaList', this.areaList);
     },
-
+    // 新增区域
+    addArea() {
+      console.log('add area');
+    },
     // 编辑某个区域
     editItem(index) {
       console.log('edit area', this.areaList[index]);
@@ -170,6 +180,16 @@ export default {
     // 删除某个区域
     deleteItem(index) {
       console.log('delete area', this.areaList[index]);
+    },
+    // 打开绑定车辆页面
+    openBindCarPage(areaId, bindCarIdArr) {
+      const data = {
+        type: this.type,
+        bindCarIdArr,
+        areaId,
+      };
+      console.log('openBindCarPage data', data);
+      this.$emit('openBindCarPage', data);
     },
   },
 };
@@ -198,6 +218,9 @@ export default {
       padding: 15px 10px 5px 15px;
       i{
         color: #999999;
+        &:hover{
+          color: #2b90f3;
+        }
       }
     }
     .area-page-body-item{
