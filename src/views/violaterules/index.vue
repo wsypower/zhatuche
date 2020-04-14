@@ -24,7 +24,7 @@
     </div>
     <div class="bind-page" :class="{trans: showPage}">
       <div class="page-header" @click="closeBindPage">
-        << 返回
+        << 保存并返回
       </div>
       <bind-car :type="type" :areaId="areaId" :bindCarIdArr="bindCarIdArr" @getBindCarIdData="getBindCarIdData"></bind-car>
     </div>
@@ -84,10 +84,16 @@ export default {
     },
     // 打开绑定车辆页面
     openBindCarPage(data) {
-      this.type = data.type;
-      this.areaId = data.areaId;
-      this.bindCarIdArr = data.bindCarIdArr;
-      this.showPage = true;
+      console.log('openBindCarPage');
+      // 如果同一个区域绑定按钮反复点击,则绑定页自动收起展开
+      if (this.areaId === data.areaId) {
+        this.showPage = !this.showPage;
+      } else {
+        this.type = data.type;
+        this.areaId = data.areaId;
+        this.bindCarIdArr = data.bindCarIdArr;
+        this.showPage = true;
+      }
     },
     // 获取此区域绑定的车辆ID数组
     getBindCarIdData(data) {

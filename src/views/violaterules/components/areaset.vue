@@ -29,6 +29,19 @@
         </div>
       </my-scroll>
     </div>
+    <a-modal :title="modalTitle"
+             v-model="visible"
+             wrapClassName="modalwrap"
+             width="100%"
+             style="paddingBottom: 0px;margin: 0px;height: 100%;top:0px"
+             :bodyStyle="{height:'calc(100% - 108px)',padding:'20px'}"
+             okText="保存"
+             cancelText="取消"
+             :centered="true"
+             :maskClosable="false"
+             :destroyOnClose="true"
+             @ok="handleSave">
+    </a-modal>
   </div>
 </template>
 <script type="text/ecmascript-6">
@@ -47,9 +60,19 @@ export default {
       indeterminate: false,
       checkAll: false,
       areaList: [],
+      // 新增/编辑弹窗
+      optType: 'add',
+      visible: false,
     };
   },
   computed: {
+    modalTitle() {
+      if (this.optType === 'add') {
+        return this.type === 'yjxs' || this.type == 'csxd' ? '新增区域' : '新增路段';
+      }
+
+      return this.type === 'yjxs' || this.type == 'csxd' ? '编辑区域' : '编辑路段';
+    },
     totalSize() {
       const num = this.areaList.reduce((acc, item, arr) => {
         if (item.name.indexOf(this.content) >= 0) {
@@ -172,10 +195,14 @@ export default {
     // 新增区域
     addArea() {
       console.log('add area');
+      this.optType = 'add';
+      this.visible = true;
     },
     // 编辑某个区域
     editItem(index) {
       console.log('edit area', this.areaList[index]);
+      this.optType = 'edit';
+      this.visible = true;
     },
     // 删除某个区域
     deleteItem(index) {
@@ -191,10 +218,36 @@ export default {
       console.log('openBindCarPage data', data);
       this.$emit('openBindCarPage', data);
     },
+
+    handleSave(e) {
+      console.log('确定保存');
+      console.log(e);
+      this.visible = false;
+      this.getAreaListData();
+    },
   },
 };
 </script>
-<style lang="stylus" scoped>
+<style lang="scss">
+  .modalwrap{
+    top:10px;
+    left:10px;
+    height: calc(100% - 20px);
+    width: calc(100% - 20px);
+    .ant-modal-content {
+      height: 100%;
+    }
+    .ant-collapse-header {
+      .anticon {
+        color: #00a4fe;
+      }
+    }
+    .ant-modal-footer {
+      text-align: center;
+    }
+  }
+</style>
+<style lang="scss" scoped>
 .area-page{
   width: 100%;
   height: 100%;
@@ -228,7 +281,7 @@ export default {
       .box-label{
         display: inline-block;
         width: 120px;
-        overflow hidden;
+        overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
         vertical-align: middle;
