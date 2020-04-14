@@ -113,15 +113,36 @@ export default class MapManager {
    * 激活绘制功能
    * type可为Point LineString Polygon Circle
    */
-  activateDraw() {
-    const source = new VectorSource();
-    const draw = new Draw({
-      source,
-      type: 'Circle',
-      geometryFunction: createBox(),
-    });
-    this.map.addInteraction(draw);
-    return draw;
+  // activateDraw() {
+  //   const source = new VectorSource();
+  //   const draw = new Draw({
+  //     source,
+  //     type: 'Circle',
+  //     geometryFunction: createBox(),
+  //   });
+  //   this.map.addInteraction(draw);
+  //   return draw;
+  // }
+  activateDraw(draw, type, source, editStyle) {
+    if (!source) {
+      source = new VectorSource({ wrapX: false });
+      const vector = new VectorLayer({
+        source,
+        style: editStyle,
+      });
+      this.map.addLayer(vector);
+    }
+    if (draw) {
+      this.map.removeInteraction(draw);
+    }
+    if (type !== 'None') {
+      draw = new Draw({
+        source,
+        type,
+      });
+      this.map.addInteraction(draw);
+    }
+    return [draw, source];
   }
 
   /**
@@ -141,7 +162,7 @@ export default class MapManager {
    * @return {[type]} [description]
    */
   getCarExtentLayer() {
-    const feature = new Feature(new Polygon([[[120.823152, 29.570056], [120.830249,29.569909], [120.828828,29.561969], [120.821972, 29.561924]]]));
+    const feature = new Feature(new Polygon([[[120.823152, 29.570056], [120.830249, 29.569909], [120.828828, 29.561969], [120.821972, 29.561924]]]));
     const style = new Style({
       stroke: new Stroke({
         color: '#E20011',

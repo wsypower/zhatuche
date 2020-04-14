@@ -3,6 +3,7 @@
   </div>
 </template>
 <script>
+import { mapMutations,mapState } from 'vuex'
 import 'ol/ol.css';
 import { Map, View } from 'ol';
 import { defaults as defaultControls } from 'ol/control';
@@ -27,6 +28,9 @@ export default {
     });
   },
   methods: {
+    ...mapMutations([
+      'setMapManager',
+    ]),
     initMap() {
       /* 添加影像地图 */
       this.map = new Map({
@@ -43,6 +47,7 @@ export default {
         controls: defaultControls({ attribution: false, rotate: false, zoom: false }), // 默认控件配置
       });
       mapManager = new MapManager(this.map);
+      this.setMapManager(mapManager);
     },
     getBaseLayers() {
       /**

@@ -172,6 +172,7 @@ export default {
     // 新增区域
     addArea() {
       console.log('add area');
+      this.$emit('showEditTools');
     },
     // 编辑某个区域
     editItem(index) {
