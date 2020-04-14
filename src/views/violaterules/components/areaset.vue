@@ -29,24 +29,17 @@
         </div>
       </my-scroll>
     </div>
-    <a-modal :title="modalTitle"
-             v-model="visible"
-             wrapClassName="modalwrap"
-             width="100%"
-             style="paddingBottom: 0px;margin: 0px;height: 100%;top:0px"
-             :bodyStyle="{height:'calc(100% - 108px)',padding:'20px'}"
-             okText="保存"
-             cancelText="取消"
-             :centered="true"
-             :maskClosable="false"
-             :destroyOnClose="true"
-             @ok="handleSave">
-    </a-modal>
+    <add-edit-dialog :visible.sync="addEditDialogVisible" :dialogTitle="modalTitle" :areaObj="areaInfo" @refreshList="getAreaListData"></add-edit-dialog>
   </div>
 </template>
 <script type="text/ecmascript-6">
+import AddEditDialog from './addeditdialog.vue';
+
 export default {
   name: 'areaset',
+  components: {
+    AddEditDialog,
+  },
   props: {
     type: {
       type: String,
@@ -62,7 +55,8 @@ export default {
       areaList: [],
       // 新增/编辑弹窗
       optType: 'add',
-      visible: false,
+      addEditDialogVisible: false,
+      areaInfo: {},
     };
   },
   computed: {
@@ -196,13 +190,14 @@ export default {
     addArea() {
       console.log('add area');
       this.optType = 'add';
-      this.visible = true;
+      this.addEditDialogVisible = true;
     },
     // 编辑某个区域
     editItem(index) {
       console.log('edit area', this.areaList[index]);
       this.optType = 'edit';
-      this.visible = true;
+      this.areaInfo = this.areaList[index];
+      this.addEditDialogVisible = true;
     },
     // 删除某个区域
     deleteItem(index) {
@@ -217,13 +212,6 @@ export default {
       };
       console.log('openBindCarPage data', data);
       this.$emit('openBindCarPage', data);
-    },
-
-    handleSave(e) {
-      console.log('确定保存');
-      console.log(e);
-      this.visible = false;
-      this.getAreaListData();
     },
   },
 };
