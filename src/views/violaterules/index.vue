@@ -8,25 +8,26 @@
       <div class="page-body">
         <a-tabs v-model="activeTab" @change="changeTab" class="content_tab">
           <a-tab-pane tab="越界行驶" key="1">
-            <area-set type="yjxs" @openBindCarPage="openBindCarPage"></area-set>
+            <area-set ref="yjxs" :typeNumber="1" @openBindCarPage="openBindCarPage"></area-set>
           </a-tab-pane>
           <a-tab-pane tab="禁行路段" key="2">
-            <area-set type="jxld" @openBindCarPage="openBindCarPage"></area-set>
+            <area-set ref="jxld" :typeNumber="2" @openBindCarPage="openBindCarPage"></area-set>
           </a-tab-pane>
           <a-tab-pane tab="指定路段" key="3">
-            <area-set type="zdld" @openBindCarPage="openBindCarPage"></area-set>
+            <area-set ref="zdld" :typeNumber="3" @openBindCarPage="openBindCarPage"></area-set>
           </a-tab-pane>
           <a-tab-pane tab="超速限定" key="4">
-            <area-set type="csxd" @openBindCarPage="openBindCarPage"></area-set>
+            <area-set ref="csxd" :typeNumber="4" @openBindCarPage="openBindCarPage"></area-set>
           </a-tab-pane>
         </a-tabs>
       </div>
     </div>
     <div class="bind-page" :class="{trans: showPage}">
-      <div class="page-header" @click="closeBindPage">
-        << 保存并返回
+      <div class="page-header" flex="dir:left cross:center main:justify">
+        <span @click="closeBindPage"><< 保存并返回</span>
+        <span>{{areaName}}</span>
       </div>
-      <bind-car :type="type" :areaId="areaId" :bindCarIdArr="bindCarIdArr" @getBindCarIdData="getBindCarIdData"></bind-car>
+      <bind-car :typeNumber="typeNumber" :areaId="areaId" :bindCarIdArr="bindCarIdArr" @getBindCarIdData="getBindCarIdData"></bind-car>
     </div>
     <!-- 地图 -->
     <LayoutMap ref="olMap"></LayoutMap>
@@ -42,8 +43,10 @@ import { findPosition, genPointByCoord } from '@/js/map/mapUtils';
 import {
   getCarList, getCarStateCount, filterCar, getCarByCarCode, getCarInfoByCarId,
 } from '@/api/service';
+import { saveBindCarsList } from '@/api/vrules';
 import AreaSet from './components/areaset.vue';
 import BindCar from './components/bindcar.vue';
+
 
 export default {
   name: 'vrules',
@@ -57,10 +60,12 @@ export default {
       activeTab: '1',
       // 是否展示绑定车辆页
       showPage: false,
-      // tab类型（yjxs、jxld、zdld、csxd）
-      type: '',
+      // tab类型（yjxs1、jxld2、zdld3、csxd4）
+      typeNumber: 0,
       // 区域ID
       areaId: '',
+      // 区域名称
+      areaName: '',
       // 编辑时已绑定的车辆的ID数组
       bindCarIdArr: [],
       // 保存时已绑定的车辆的ID数组
@@ -89,8 +94,9 @@ export default {
       if (this.areaId === data.areaId) {
         this.showPage = !this.showPage;
       } else {
-        this.type = data.type;
+        this.typeNumber = data.type;
         this.areaId = data.areaId;
+        this.areaName = data.areaName;
         this.bindCarIdArr = data.bindCarIdArr;
         this.showPage = true;
       }
@@ -103,10 +109,23 @@ export default {
     closeBindPage() {
       // 调取接口保存绑定车辆数据
       console.log('保存接口所需入参');
-      console.log(`type: ${this.type}`);
+      console.log(`type: ${this.typeNumber}`);
       console.log(`areaId: ${this.areaId}`);
       console.log('saveBindCarIdArr', this.saveBindCarIdArr);
-      this.showPage = false;
+      const params = {
+        carIds: this.saveBindCarIdArr.join(','),
+        areaId: this.areaId,
+      };
+      saveBindCarsList(params).then((data) => {
+        if (data.code === 0) {
+          this.$message.success('绑定成功！！！');
+          this.showPage = false;
+          const tabArr = ['yjxs', 'jxld', 'zdld', 'csxd'];
+          this.$refs[tabArr[this.typeNumber - 1]].getAreaListData();
+        } else {
+          this.$message.error('绑定失败，请检查！！！');
+        }
+      });
     },
   },
 };
@@ -206,12 +225,15 @@ export default {
     }
     .page-header {
       height: 55px;
-      line-height: 55px;
-      padding-left: 20px;
-      font-family: PingFang-SC-Heavy;
-      font-size: 14px;
-      color: #2b90f3;
-      cursor: pointer;
+      padding: 0px 20px;
+      span{
+        font-family: PingFang-SC-Heavy;
+        font-size: 14px;
+        &:first-child{
+          color: #2b90f3;
+          cursor: pointer;
+        }
+      }
     }
   }
 </style>
