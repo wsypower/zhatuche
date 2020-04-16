@@ -54,6 +54,7 @@
 import LayoutMap from '@/views/violaterules/map/olMap.vue';
 import MapManager from '@/js/map/MapManager';
 import { editStyle } from '@/util/util.map.style';
+import { addEditAreaOrLine } from '@/api/vrules';
 
 let map;
 let mapManager;
@@ -238,8 +239,32 @@ export default {
     handleSave(e) {
       console.log('确定保存');
       console.log(e);
-      this.addEditDialogVisible = false;
-      this.$emit('refreshList');
+      const tempArea = {
+        id: '',
+        type: this.areaObj.type,
+        locationId: '',
+        name: '',
+        speed: '',
+      };
+      // 通过areaId判断是新增还是编辑
+      if (this.areaObj.areaId) {
+        tempArea.id = this.areaObj.areaId;
+        tempArea.locationId = 'jgjhgfsdhfgjsd';
+        tempArea.name = '修改的区域';
+      } else {
+        tempArea.locationId = '1254sdkfig';
+        tempArea.name = '新增的区域A';
+      }
+
+      addEditAreaOrLine(tempArea).then((data) => {
+        if (data.code === 0) {
+          this.$message.success('保存成功！！！');
+          this.addEditDialogVisible = false;
+          this.$emit('refreshList');
+        } else {
+          this.$message.error('保存失败，请检查！！！');
+        }
+      });
     },
     // 生成uuid
     generateUUID() {

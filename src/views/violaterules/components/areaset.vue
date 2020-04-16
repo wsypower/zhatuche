@@ -17,9 +17,9 @@
         </div>
         <div class="area-page-body-item"
              flex="dir:left cross:center main:justify"
-             v-for="(area, index) in areaList" :key="index" v-show="area.name.indexOf(content)>=0">
-          <a-checkbox @change="onCheckChange(index)" v-model="area.checked"><span class="box-label">{{area.name}}{{area.speed}}</span></a-checkbox>
-          <span class="text-btn" @click="openBindCarPage(area.id,area.bindCarIdArr)">绑定({{area.bindCarIdArr.length}})</span>
+             v-for="(area, index) in areaList" :key="index" v-show="area.areaName.indexOf(content)>=0">
+          <a-checkbox @change="onCheckChange(index)" v-model="area.checked"><span class="box-label">{{area.areaName}}{{area.speed}}</span></a-checkbox>
+          <span class="text-btn" v-if="typeNumber!==4" @click="openBindCarPage(area.areaId, area.areaName,area.carIdList)">绑定({{area.carIdList.length}})</span>
           <span class="opt-btns">
             <a-icon type="edit" @click="editItem(index)"/>
             <a-popconfirm title="确定删除此区域吗？" okText="是" cancelText="否" @confirm="deleteItem(index)">
@@ -39,6 +39,7 @@
   </div>
 </template>
 <script type="text/ecmascript-6">
+import { getAreaOrLineList, deleteAreaOrLine } from '@/api/vrules';
 import AddEditDialog from './addeditdialog.vue';
 
 export default {
@@ -47,9 +48,9 @@ export default {
     AddEditDialog,
   },
   props: {
-    type: {
-      type: String,
-      default: '',
+    typeNumber: {
+      type: Number,
+      default: 0,
     },
   },
   data() {
@@ -68,14 +69,13 @@ export default {
   computed: {
     modalTitle() {
       if (this.optType === 'add') {
-        return this.type === 'yjxs' || this.type == 'csxd' ? '新增区域' : '新增路段';
+        return this.typeNumber === 1 || this.typeNumber === 4 ? '新增区域' : '新增路段';
       }
-
-      return this.type === 'yjxs' || this.type == 'csxd' ? '编辑区域' : '编辑路段';
+      return this.typeNumber === 1 || this.typeNumber === 4 ? '编辑区域' : '编辑路段';
     },
     totalSize() {
       const num = this.areaList.reduce((acc, item, arr) => {
-        if (item.name.indexOf(this.content) >= 0) {
+        if (item.areaName.indexOf(this.content) >= 0) {
           acc += 1;
         }
         return acc;
@@ -114,47 +114,21 @@ export default {
   methods: {
     // 获取所有区域数据
     getAreaListData() {
-      this.areaList = [{
-        id: '0001',
-        name: '区域A',
-        bindCarIdArr: ['0-0-0-2'],
-        mapId: '',
-      }, {
-        id: '0002',
-        name: '区域B',
-        bindCarIdArr: ['0-0-1-2', '0-0-0-1'],
-        mapId: '',
-      }, {
-        id: '0003',
-        name: '区域C',
-        bindCarIdArr: ['0-0-3-2'],
-        mapId: '',
-      }, {
-        id: '0004',
-        name: '区域D',
-        bindCarIdArr: ['0-0-4-2', '0-0-0-2'],
-        mapId: '',
-      }, {
-        id: '0005',
-        name: '区域E',
-        bindCarIdArr: ['0-0-2-1', '0-0-2-2', '0-0-4-2'],
-        mapId: '',
-      }, {
-        id: '0006',
-        name: '区域F',
-        bindCarIdArr: ['0-0-2-2', '0-0-1-2'],
-        mapId: '',
-      }];
-      this.areaList.map((item) => {
-        item.checked = false;
-        return item;
+      getAreaOrLineList({ type: this.typeNumber, name: this.searchContent }).then((data) => {
+        this.areaList = data;
+        this.areaList.map((item) => {
+          item.checked = false;
+          item.type = this.typeNumber;
+          return item;
+        });
+        console.log('this.areaList', this.areaList);
       });
-      console.log('this.areaList', this.areaList);
     },
     // 搜索
     onSearch() {
       console.log(`searchContent: ${this.searchContent}`);
-      this.content = this.searchContent.trim();
+      // this.content = this.searchContent.trim();
+      this.getAreaListData();
     },
     // 全选
     onCheckAllChange() {
@@ -176,12 +150,24 @@ export default {
       let checkedAreaId = '';
       this.areaList.forEach((item, index) => {
         if (item.checked) {
-          checkedAreaId = `${checkedAreaId},${item.id}`;
+          checkedAreaId = `${checkedAreaId},${item.areaId}`;
         }
       });
       if (checkedAreaId.trim().length > 0) {
         checkedAreaId = checkedAreaId.substring(1);
         console.log('checkedAreaId', checkedAreaId);
+        const deleteObj = {
+          type: this.typeNumber,
+          ids: checkedAreaId,
+        };
+        deleteAreaOrLine(deleteObj).then((data) => {
+          if (data.code === 0) {
+            this.$message.success('删除成功！！！');
+            this.getAreaListData();
+          } else {
+            this.$message.error('删除失败！！！');
+          }
+        });
       } else {
         this.$message.warning('请至少选择一个区域进行删除！！！');
       }
@@ -196,6 +182,9 @@ export default {
     addArea() {
       console.log('add area');
       this.optType = 'add';
+      this.areaInfo = {
+        type: this.typeNumber,
+      };
       this.addEditDialogVisible = true;
     },
     // 编辑某个区域
@@ -208,13 +197,26 @@ export default {
     // 删除某个区域
     deleteItem(index) {
       console.log('delete area', this.areaList[index]);
+      const deleteObj = {
+        type: this.typeNumber,
+        ids: this.areaList[index].areaId,
+      };
+      deleteAreaOrLine(deleteObj).then((data) => {
+        if (data.code === 0) {
+          this.$message.success('删除成功！！！');
+          this.getAreaListData();
+        } else {
+          this.$message.error('删除失败！！！');
+        }
+      });
     },
     // 打开绑定车辆页面
-    openBindCarPage(areaId, bindCarIdArr) {
+    openBindCarPage(areaId, areaName, bindCarIdArr) {
       const data = {
-        type: this.type,
+        type: this.typeNumber,
         bindCarIdArr,
         areaId,
+        areaName,
       };
       console.log('openBindCarPage data', data);
       this.$emit('openBindCarPage', data);
