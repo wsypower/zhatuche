@@ -3,18 +3,6 @@ import GeoJSON from 'ol/format/GeoJSON';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import { dateFmt } from '@/js/utils';
-
-// 获取古树名木列表接口
-const getTreeListAPI = `${URL_CONFIG.baseURL}/gis/getTreeList`;
-// 获取人员列表接口
-const getUserListAPI = `${URL_CONFIG.baseURL}/gis/getUserlist`;
-// 获取人员列表接口
-const getParkListAPI = `${URL_CONFIG.baseURL}/gis/getParkList`;
-// 通过id获取人员信息
-const getUserInfoByIdAPI = `${URL_CONFIG.baseURL}/gis/getUserDetailByUserId`;
-// 获取病虫害及公园人流数据
-const getPassengerAndPestListAPI = `${URL_CONFIG.baseURL}/passenger/getPassengerAndPestList`;
-
 // 获取车辆列表接口
 const getCarsListAPI = `${URL_CONFIG.carURL}/gw/tcarinfo/getMuckTcarInfoCompanyList`;
 const getCarStateCountAPI = `${URL_CONFIG.carURL}/gw/tcarinfo/getTcarCount`;
@@ -22,144 +10,6 @@ const getCarByCarCodeAPI = `${URL_CONFIG.carURL}/gw/tcarinfo/getCarInfoByCarCode
 const getCarInfoByCarIdAPI = `${URL_CONFIG.carURL}/gw/tcarinfo/carInfoByCarId`;
 const getTrackAPI = `${URL_CONFIG.carURL}/gw/tcarlocation/carLocationList`;
 const getCarViolateInfoAPI = `${URL_CONFIG.carURL}/gw/tcarinfo/getCarviolateList`;
-
-/*
-* 获取人员列表方法
-* */
-export async function getUserList() {
-  const { data } = await axios.get(getUserListAPI);
-  const features = data.result.map((d) => {
-    let feature;
-    if (d.latitude && d.latitude.length > 0 && d.longitude && d.longitude.length > 0) {
-      feature = new Feature({
-        geometry: new Point([parseFloat(d.longitude), parseFloat(d.latitude)]),
-      });
-      feature.setProperties(d);
-      feature.set('type', 'user');
-    }
-    return feature;
-  });
-  return features.filter(Boolean);
-}
-/*
-* 获取古树名木列表方法
-* */
-export async function getTreeList() {
-  const { data } = await axios.get(getTreeListAPI);
-  const features = data.result.map((d) => {
-    let feature;
-    if (d.latitude && d.latitude.length > 0 && d.longitude && d.longitude.length > 0) {
-      feature = new Feature({
-        geometry: new Point([parseFloat(d.longitude), parseFloat(d.latitude)]),
-      });
-      feature.setProperties(d);
-      feature.set('type', 'tree');
-    }
-    return feature;
-  });
-  return features.filter(Boolean);
-}
-/*
-* 获取公园列表方法
-* */
-export async function getParkList() {
-  const { data } = await axios.get(getParkListAPI);
-  console.log(data.result);
-  // const data = {
-  //   code: '0',
-  //   msg: 'OK',
-  //   result: [
-  //     {
-  //       id: '1',
-  //       name: '罗星公园',
-  //       latitude: '29.616550720214847',
-  //       longitude: '120.8131572265625',
-  //       sort: '100',
-  //       state: '0',
-  //       address: '浙江省绍兴市嵊州市罗星公园',
-  //       picUrl: 'http://192.168.71.33:8280/upload/file/2019/10/10/20191010111428332559.png',
-  //     },
-  //     {
-  //       id: '2',
-  //       name: '罗星公园',
-  //       latitude: '29.59296371459961',
-  //       longitude: '120.85141471862793',
-  //       sort: '100',
-  //       state: '0',
-  //       address: '浙江省绍兴市嵊州市罗星公园',
-  //       picUrl: 'http://192.168.71.33:8280/upload/file/2019/10/10/20191010111428332559.png,http://192.168.71.33:8280/upload/file/2019/09/24/20190924102232412598.png',
-  //     },
-  //   ],
-  // };
-  const features = data.result.map((d) => {
-    let feature;
-    if (d.latitude && d.latitude.length > 0 && d.longitude && d.longitude.length > 0) {
-      feature = new Feature({
-        geometry: new Point([parseFloat(d.longitude), parseFloat(d.latitude)]),
-      });
-      feature.setProperties(d);
-      feature.set('type', 'park');
-    }
-    return feature;
-  });
-  return features.filter(Boolean);
-}
-/*
-* 获取病虫害及公园人流数据
-* */
-export async function getPassengerAndPestList() {
-  const { data } = await axios.get(getPassengerAndPestListAPI);
-  console.log(data.result);
-  return data.result;
-}
-
-/*
-* 获取绿道列表方法
-* */
-export async function getRoadList(conditions) {
-  const { data } = await axios.post(`${getRoadListAPI}`, conditions);
-  let res = [];
-  let features = [];
-  if (data.data) {
-    res = data.data.map(d => ({
-      id: d.id,
-      name: d.name,
-      picpath: `http://192.168.71.33:50000${d.picpath.split(',')[0].substr(1)}`,
-      roadlocation: d.roadlocation,
-      imgurls: d.picpath,
-      cityname: d.cityname,
-      countyname: d.countyname,
-    }));
-    data.gs.forEach((g) => {
-      features = features.concat(new GeoJSON().readFeatures(g));
-    });
-  }
-  return [res, features];
-}
-/*
-* 根据id列表获取绿道图形方法
-* */
-// export async function getRoadGeometry(ids) {
-//   const data = await axios.get(`${URL_CONFIG.gisURL}/geoserver/hescgis/ows`, {
-//     params: {
-//       service: 'WFS',
-//       version: '1.0.0',
-//       request: 'GetFeature',
-//       typeName: 'hescgis:lvdao',
-//       outputFormat: 'application/json',
-//       cql_filter: `"id" in ${ids}`,
-//     },
-//   });
-//   const points = new GeoJSON().readFeatures(data.data);
-//   return points;
-// }
-/*
-* 通过id获取人员信息方法
-* */
-export async function getUserInfoById(id) {
-  const { data } = await axios.get(`${getUserInfoByIdAPI}?userId=${id}`);
-  return data;
-}
 
 /*
 * 获取车辆列表方法
@@ -263,9 +113,6 @@ export async function getCarByCarCode(code) {
 * */
 export async function getCarInfoByCarId(id) {
   const { data } = await axios.get(`${getCarInfoByCarIdAPI}?carId=${id}`);
-  // const { data } = await axios.post(getCarInfoByCarIdAPI, {
-  //   id,
-  // });
   const {
     cCarcode,
     cIdentifier,

@@ -1,5 +1,5 @@
 <template>
-  <div id="map">
+  <div id="mapEdit">
   </div>
 </template>
 <script>
@@ -36,7 +36,7 @@ export default {
       /* 添加影像地图 */
       this.map = new Map({
         loadTilesWhileAnimating: true,
-        target: 'map',
+        target: 'mapEdit',
         view: new View({
           projection: 'EPSG:4326',
           center: [120.82905292510986, 29.591546058654785],
@@ -163,7 +163,7 @@ export default {
 };
 </script>
 <style scoped>
-#map {
+#mapEdit {
   width: 100%;
   height: 100%;
 }

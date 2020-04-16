@@ -29,7 +29,13 @@
         </div>
       </my-scroll>
     </div>
-    <add-edit-dialog :visible.sync="addEditDialogVisible" :dialogTitle="modalTitle" :areaObj="areaInfo" @refreshList="getAreaListData"></add-edit-dialog>
+    <add-edit-dialog :visible.sync="addEditDialogVisible"
+                     :dialogTitle="modalTitle"
+                     :areaObj="areaInfo"
+                     :editType="type"
+                     :optType="optType"
+                     @refreshList="getAreaListData">
+    </add-edit-dialog>
   </div>
 </template>
 <script type="text/ecmascript-6">

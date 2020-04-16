@@ -11,38 +11,38 @@ import LineString from 'ol/geom/LineString';
  * @return {[type]}        [description]
  */
 export function genPointFeatures(points, tag) {
-  return points.map(pt => {
-    const ptFeature = new Feature(new Point([Number(pt.pointx), Number(pt.pointy)]))
-    ptFeature.setProperties(pt)
-    ptFeature.set('tag', tag)
-    return ptFeature
-  })
+  return points.map((pt) => {
+    const ptFeature = new Feature(new Point([Number(pt.pointx), Number(pt.pointy)]));
+    ptFeature.setProperties(pt);
+    ptFeature.set('tag', tag);
+    return ptFeature;
+  });
 }
 /*
  * 市容监测根据点位信息生成feature
  * */
 export function setPointsFeature(points) {
-  let features = []
+  const features = [];
   for (let i = 0; i < points.length; i++) {
-    let feature = new Feature(new Point([Number(points[i].x), Number(points[i].y)]))
-    features[i] = feature
-    feature.setProperties(points[i])
-    feature.set('state', points[i].state)
+    const feature = new Feature(new Point([Number(points[i].x), Number(points[i].y)]));
+    features[i] = feature;
+    feature.setProperties(points[i]);
+    feature.set('state', points[i].state);
   }
-  return features
+  return features;
 }
 /*
  * 市容监测根据点位信息生成feature
  * */
 export function setryPointsFeature(points) {
-  let features = []
+  const features = [];
   for (let i = 0; i < points.length; i++) {
-    let feature = new Feature(new Point([Number(points[i].position.x), Number(points[i].position.y)]))
-    features[i] = feature
-    feature.setProperties(points[i])
-    feature.set('state', points[i].status)
+    const feature = new Feature(new Point([Number(points[i].position.x), Number(points[i].position.y)]));
+    features[i] = feature;
+    feature.setProperties(points[i]);
+    feature.set('state', points[i].status);
   }
-  return features
+  return features;
 }
 
 /**
@@ -66,15 +66,15 @@ export function genPointByCoord(coord) {
 export function genTrackFeaturesByLocationList(track) {
   const features = [];
   const coords = [];
-  //根据点列生成轨迹线
-  track.forEach(trackPt => {
+  // 根据点列生成轨迹线
+  track.forEach((trackPt) => {
     if (trackPt.cCoordinatex && trackPt.cCoordinatey) {
       const coord = [Number(trackPt.cCoordinatex), Number(trackPt.cCoordinatey)];
       coords.push(coord);
     }
-  })
+  });
   if (coords.length > 0) {
-    //根据数据生成feature
+    // 根据数据生成feature
     const trackLine = genTrackFeatureByCoords(coords);
     const firstPoint = genPointByCoord(coords[0]);
     const lastPoint = genPointByCoord(coords[coords.length - 1]);
@@ -83,7 +83,8 @@ export function genTrackFeaturesByLocationList(track) {
     features.push(
       trackLine,
       firstPoint,
-      lastPoint)
+      lastPoint,
+    );
   }
   return features;
 }
@@ -91,7 +92,7 @@ export function genTrackFeaturesByLocationList(track) {
 
 export function findPosition(curTime, trackCoordinates) {
   let index = 0;
-  //debugger;
+  // debugger;
   if (trackCoordinates && trackCoordinates.length > 1) {
     if (curTime < trackCoordinates[0].cCreatetime) {
       index = 0;
@@ -105,12 +106,10 @@ export function findPosition(curTime, trackCoordinates) {
     if (index > 0 && index < trackCoordinates.length - 2) {
       if (curTime === trackCoordinates[index].cCreatetime) {
         return trackCoordinates[index];
-      } else {
-        return createEncytPoi(index, curTime, trackCoordinates);
       }
-    } else {
-      return trackCoordinates[index];
+      return createEncytPoi(index, curTime, trackCoordinates);
     }
+    return trackCoordinates[index];
   }
 }
 /**
@@ -120,9 +119,9 @@ export function findPosition(curTime, trackCoordinates) {
  * @returns
  */
 function binarySearch(array, value) {
-  let startIndex = 0,
-    stopIndex = array.length - 1,
-    middle = (stopIndex + startIndex) >>> 1;
+  let startIndex = 0;
+  let stopIndex = array.length - 1;
+  let middle = (stopIndex + startIndex) >>> 1;
   while (array[middle].cCreatetime / 1000 != value / 1000 && startIndex < stopIndex) {
     if (value < array[middle].cCreatetime) {
       stopIndex = middle - 1;
@@ -142,17 +141,17 @@ function binarySearch(array, value) {
 function createEncytPoi(index, time, trackCoordinates) {
   let pre = index;
   if (time > trackCoordinates[index].cCreatetime) {
-    index = index + 1;
+    index += 1;
   }
   if (time < trackCoordinates[index].cCreatetime) {
     pre = index - 1;
   }
   if ((trackCoordinates[index].cCreatetime - trackCoordinates[pre].cCreatetime) / 1000 < 300) {
-    var tpoi = { "cCoordinatex": 0, "cCoordinatey": 0, "cCreatetime": time };
-    var d = trackCoordinates[index].cCreatetime - trackCoordinates[pre].cCreatetime;
-    var c = time - trackCoordinates[pre].cCreatetime;
-    var x = linear(parseFloat(trackCoordinates[pre].cCoordinatex), parseFloat(trackCoordinates[index].cCoordinatex), c, d);
-    var y = linear(parseFloat(trackCoordinates[pre].cCoordinatey), parseFloat(trackCoordinates[index].cCoordinatey), c, d);
+    const tpoi = { cCoordinatex: 0, cCoordinatey: 0, cCreatetime: time };
+    const d = trackCoordinates[index].cCreatetime - trackCoordinates[pre].cCreatetime;
+    const c = time - trackCoordinates[pre].cCreatetime;
+    const x = linear(parseFloat(trackCoordinates[pre].cCoordinatex), parseFloat(trackCoordinates[index].cCoordinatex), c, d);
+    const y = linear(parseFloat(trackCoordinates[pre].cCoordinatey), parseFloat(trackCoordinates[index].cCoordinatey), c, d);
     tpoi.cCoordinatex = x;
     tpoi.cCoordinatey = y;
     return tpoi;
@@ -169,9 +168,9 @@ function createEncytPoi(index, time, trackCoordinates) {
  * @returns
  */
 function linear(initPos, targetPos, currentCount, count) {
-  var b = initPos,
-    c = targetPos - initPos,
-    t = currentCount,
-    d = count;
+  const b = initPos;
+  const c = targetPos - initPos;
+  const t = currentCount;
+  const d = count;
   return c * t / d + b;
 }

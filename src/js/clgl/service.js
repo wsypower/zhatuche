@@ -21,7 +21,7 @@ import {
   getCarTypeCountApi,
   getTaskByIdApi,
   deleteViolateInfoByIdApi,
-  carRoadWFSUrl
+  carRoadWFSUrl,
 } from '@/conf/api';
 import { dateFmt } from '@/js/utils';
 import GeoJSON from 'ol/format/GeoJSON';
@@ -38,14 +38,14 @@ import offlinelCar from '@/assets/images/offline.png';
 
 const dFmt = 'yyyy-MM-dd';
 const fieldMapping = {
-  '超时停留': 'overtime',
-  '超速': 'overspeed',
-  '超范围': 'overrange',
-  '禁行路段': 'lineforbid',
+  超时停留: 'overtime',
+  超速: 'overspeed',
+  超范围: 'overrange',
+  禁行路段: 'lineforbid',
   // '未审批': 'unapproval',
-  '线路偏移': 'lineoffset',
-  '疑似偷盗':'doubtsteal'
-}
+  线路偏移: 'lineoffset',
+  疑似偷盗: 'doubtsteal',
+};
 const errLabels = [{
   name: '超时停留',
   code: '1',
@@ -61,9 +61,9 @@ const errLabels = [{
 }, {
   name: '线路偏移',
   code: '5',
-},{
-  name:'疑似偷盗',
-  code:'6'
+}, {
+  name: '疑似偷盗',
+  code: '6',
 }];
 /**
  * 获取自卸货车树
@@ -78,29 +78,31 @@ export async function getCarTree(type) {
     url = `${getCarTreeApi}?type=${type}`;
   }
   const { data } = await axios.get(url);
-  const obj = data.obj;
+  const { obj } = data;
   let tree = [];
   let tag;
   let allOnlineNum = 0;
   let allTotalNum = 0;
   if (obj) {
     const carComps = obj.children;
-    tree = carComps.map(com => {
+    tree = carComps.map((com) => {
       const totalNum = com.children.length;
       let onlineNum = totalNum;
-      const cars = com.children.map(car => {
-        const { isOnline, lineforbid, lineoffset, overrange, overspeed, overtime,doubtsteal} = car;
+      const cars = com.children.map((car) => {
+        const {
+          isOnline, lineforbid, lineoffset, overrange, overspeed, overtime, doubtsteal,
+        } = car;
         let state;
         let icon;
         if (!isOnline) {
           onlineNum--;
           icon = offlinelCar;
           state = 'offline';
-        } else if (!Number(lineforbid) || !Number(lineoffset) || !Number(overrange) || !Number(overspeed) || !Number(overtime)|| !Number(doubtsteal)) {
+        } else if (!Number(lineforbid) || !Number(lineoffset) || !Number(overrange) || !Number(overspeed) || !Number(overtime) || !Number(doubtsteal)) {
           icon = errlCar;
           state = 'err';
         } else {
-          //debugger;
+          // debugger;
           icon = norlCar;
           state = 'normal';
         }
@@ -110,8 +112,8 @@ export async function getCarTree(type) {
           state,
           name: car.carcode,
           checked: true,
-        }
-      })
+        };
+      });
       points = [...cars, ...points];
       const tag = `${onlineNum}/${totalNum}`;
       allOnlineNum += onlineNum;
@@ -123,9 +125,8 @@ export async function getCarTree(type) {
         tag,
         checked: true,
         children: cars,
-      }
-    })
-
+      };
+    });
   }
   tag = `${allOnlineNum}/${allTotalNum}`;
   return { tree, tag, points };
@@ -154,7 +155,6 @@ export async function getCarTree(type) {
 // }
 
 
-
 /**
  * 添加类型点，可选：消纳点，垃圾堆放点，项目，停车场，消纳场
  * type:'2','3','4','5','6'/消纳点，消纳场，堆放点，停车场，项目（工地）
@@ -164,37 +164,37 @@ const TYPEMAPPING = {
   cp: {
     code: 2,
     url: cpWFSUrl,
-    name:'地点',
+    name: '地点',
   },
   ca: {
     code: 3,
     url: caWFSUrl,
-    name:'地点'
+    name: '地点',
   },
   trash: {
     code: 4,
     url: trashWFSUrl,
-    name:'名称'
+    name: '名称',
   },
   parking: {
     code: 5,
     url: parkingWFSUrl,
-    name:'地址'
+    name: '地址',
   },
   project: {
     code: 6,
     url: projectWFSUrl,
-    name:'名称'
-  }
-}
+    name: '名称',
+  },
+};
 export async function getTypePoints(type) {
   const cpWFSPromise = axios.get(TYPEMAPPING[type].url);
-  const cpInfoPromise = axios.get(getCpInfoApi + "?type=" + TYPEMAPPING[type].code+"&range=300000");
+  const cpInfoPromise = axios.get(`${getCpInfoApi}?type=${TYPEMAPPING[type].code}&range=300000`);
   const { data: geojson } = await cpWFSPromise;
   const { data: cpData } = await cpInfoPromise;
   const cpInfo = cpData.obj;
   const points = new GeoJSON().readFeatures(geojson);
-  points.forEach(pt => {
+  points.forEach((pt) => {
     let id = pt.getId();
     id = id.substr(id.indexOf('.') + 1);
     const target = cpInfo.filter(i => i.id === id);
@@ -212,7 +212,7 @@ export async function getTypePoints(type) {
     const coordinates = pt.getGeometry().getCoordinates()[0];
     pt.set('pointx', coordinates[0]);
     pt.set('pointy', coordinates[1]);
-  })
+  });
   return points;
 }
 
@@ -223,12 +223,12 @@ export async function getTypePoints(type) {
 export async function getKeyRoads() {
   const { data: geojson } = await axios.get(keyRoadWFSUrl);
   const roads = new GeoJSON().readFeatures(geojson);
-  roads.forEach(r => {
+  roads.forEach((r) => {
     r.set('type', 'kr');
     let id = r.getId();
     id = id.substr(id.indexOf('.') + 1);
     r.set('id', id);
-  })
+  });
   return roads;
 }
 /**
@@ -237,8 +237,8 @@ export async function getKeyRoads() {
  */
 export async function getCarRoads() {
   const { data: geojson } = await axios.get(carRoadWFSUrl);
-  let carRoads=[];
-  if(geojson){
+  let carRoads = [];
+  if (geojson) {
     carRoads = new GeoJSON().readFeatures(geojson);
   }
   return carRoads;
@@ -252,42 +252,42 @@ export async function getCarRoads() {
  * @return {[type]}                [description]
  */
 export function filterCar(carFeature, selectedStates, uncheckedCarIds) {
-  //debugger;
+  // debugger;
   let filterCarFeatures;
   if (selectedStates.includes('全部状态')) {
     filterCarFeatures = carFeature;
   } else {
     if (!selectedStates.includes('离线')) {
-      //不含离线
+      // 不含离线
       filterCarFeatures = carFeature.filter(f => f.get('isOnline') === 1);
     } else {
       filterCarFeatures = carFeature;
     }
 
-    filterCarFeatures = filterCarFeatures.filter(f => {
+    filterCarFeatures = filterCarFeatures.filter((f) => {
       const fields = selectedStates.filter(state => state !== '正常' && state !== '离线').map(state => fieldMapping[state]);
       let filterJudge = false;
       if (fields.length > 0) {
-        fields.forEach(field => {
+        fields.forEach((field) => {
           filterJudge = filterJudge || f.get(field) === '0';
-        })
+        });
       }
       let isNormal = true;
-      for (let item in fieldMapping) {
+      for (const item in fieldMapping) {
         const field = fieldMapping[item];
         isNormal = (f.get(field) !== '0') && isNormal;
       }
       if (selectedStates.includes('正常')) {
-        if(selectedStates.length === 1){
+        if (selectedStates.length === 1) {
           filterJudge = isNormal;
-        }else{
+        } else {
           filterJudge = filterJudge || isNormal;
         }
       }
       return f.get('isOnline') === 0 || filterJudge;
-    })
+    });
   }
-  if (uncheckedCarIds.length>0) {
+  if (uncheckedCarIds.length > 0) {
     filterCarFeatures = filterCarByChecked(filterCarFeatures, uncheckedCarIds);
   }
   return filterCarFeatures;
@@ -296,7 +296,7 @@ export function filterCar(carFeature, selectedStates, uncheckedCarIds) {
 export async function getCompanies() {
   const { data } = await axios.get(getCompaniesApi);
   const companies = data.obj;
-  return companies.map(c => {
+  return companies.map((c) => {
     c.label = c.name;
     return c;
   });
@@ -307,7 +307,6 @@ export async function getCompanies() {
  * @return {[type]} [description]
  */
 export async function getCar(carId) {
-
   const { data } = await axios.post(getCarInfoByIdApi, {
     carId,
   });
@@ -315,7 +314,6 @@ export async function getCar(carId) {
 }
 
 export async function getCarInfoById(carId) {
-
   const { data } = await axios.post(getCarInfoByIdApi, {
     carId,
   });
@@ -376,7 +374,7 @@ export async function getCarInfoById(carId) {
       name: '公司联系人',
       value: gslxr,
       phoneName: '联系电话',
-      phoneNum: gslxdh
+      phoneNum: gslxdh,
     }],
   };
 }
@@ -389,23 +387,21 @@ export async function searchCarByCondition(condition) {
   const { data } = await axios.post(searchCarsApi, condition);
   const result = data.obj;
   if (result.errRecords) {
-    result.errRecords.forEach(item => {
+    result.errRecords.forEach((item) => {
       item.expand = false;
       const violates = [];
-      item.details.forEach(d => {
+      item.details.forEach((d) => {
         d.code = errLabels.filter(l => l.name === d.violate)[0].code;
         violates.push(d.violate);
-      })
-      item.errLabels = errLabels.filter(label => {
-        return violates.includes(label.name)
       });
-    })
+      item.errLabels = errLabels.filter(label => violates.includes(label.name));
+    });
   }
   if (result.errInfo) {
-    result.errInfo.forEach(item => {
+    result.errInfo.forEach((item) => {
       item.name = item.type;
       item.value = item.num;
-    })
+    });
   }
   return result;
 }
@@ -419,43 +415,43 @@ export async function searchCarByCondition(condition) {
  */
 export async function getCarViolateInfo(carId, startTime, endTime) {
   if (!startTime) {
-    startTime = dateFmt(dFmt, new Date()) + ' 00:00:00';
+    startTime = `${dateFmt(dFmt, new Date())} 00:00:00`;
   }
   if (!endTime) {
-    endTime = dateFmt(dFmt, new Date()) + ' 23:59:59';
+    endTime = `${dateFmt(dFmt, new Date())} 23:59:59`;
   }
   const { data } = await axios.get(getCarViolateInfoApi, {
     params: {
       carId,
       startTime,
-      endTime
-    }
+      endTime,
+    },
   });
   return data.obj;
 }
 
 export async function searchTrack(carid, startTime, endTime) {
-  const { data } = await axios.post(getTrackApi + `?startIndex=1&pageSize=99999&carid=${carid}&startTime=${startTime}&endTime=${endTime}`);
+  const { data } = await axios.post(`${getTrackApi}?startIndex=1&pageSize=99999&carid=${carid}&startTime=${startTime}&endTime=${endTime}`);
   return data.obj.tCarlocationList;
 }
 
 
-export async function getRealTimeTrack(id, type,range=300000) {
+export async function getRealTimeTrack(id, type, range = 300000) {
   const { data } = await axios.get(getRealTimeTrackApi, {
     params: {
       id,
       type,
-      range
-    }
-  })
+      range,
+    },
+  });
   const info = data.obj;
   // const enterNum = info.length;
   // const leaveNum = info.filter(item => item.end_time).length;
   // const enterNum = info.data;
-  let enterNum=0;
-  let leaveNum=0;
-  for(let i=0;i<info.length;i++){
-    enterNum +=info[i].data.length;
+  let enterNum = 0;
+  let leaveNum = 0;
+  for (let i = 0; i < info.length; i++) {
+    enterNum += info[i].data.length;
     leaveNum += info[i].data.filter(item => item.end_time).length;
   }
   // const leaveNum = info.filter(item => item.end_time).length;
@@ -463,7 +459,7 @@ export async function getRealTimeTrack(id, type,range=300000) {
     enterNum,
     leaveNum,
     info,
-  }
+  };
 }
 
 /**
@@ -473,7 +469,7 @@ export async function addTask(params) {
   let paramsStr = '';
   for (const k in params) {
     if (params[k]) {
-      paramsStr += `${k}=${params[k]}&`
+      paramsStr += `${k}=${params[k]}&`;
     }
   }
   let url = addTaskApi;
@@ -489,10 +485,10 @@ export async function addTask(params) {
 export async function getAllTasks() {
   const { data } = await axios.get(getAllTasksApi);
   if (data.obj) {
-    data.obj.forEach(item => {
+    data.obj.forEach((item) => {
       item.state = item.taskState;
       item.result = [];
-    })
+    });
   }
   return data.obj;
 }
@@ -503,19 +499,19 @@ export async function getCarTypeCount() {
 }
 
 export async function getTaskById(id) {
-  const { data } = await axios.get(getTaskByIdApi + "?id=" + id);
+  const { data } = await axios.get(`${getTaskByIdApi}?id=${id}`);
   return data.obj;
 }
 
 export function updateCarTree(oldTree, newTree) {
-  oldTree.forEach(oldTreeItem => {
-    //在newTree中找到当前oldTreeItem对应的树节点
+  oldTree.forEach((oldTreeItem) => {
+    // 在newTree中找到当前oldTreeItem对应的树节点
     const targetTreeItem = newTree.filter(item => item.name === oldTreeItem.name)[0];
     if (targetTreeItem) {
       oldTreeItem.tag = targetTreeItem.tag;
       const cars = oldTreeItem.children;
       if (cars.length > 0) {
-        cars.forEach(c => {
+        cars.forEach((c) => {
           const filteredTarget = targetTreeItem.children.filter(item => item.carid === c.carid)[0];
           if (filteredTarget) {
             c.icon = filteredTarget.icon;
@@ -525,12 +521,10 @@ export function updateCarTree(oldTree, newTree) {
 
             c.pointy = filteredTarget.pointy;
           }
-
-        })
+        });
       }
     }
-
-  })
+  });
 }
 
 export function filterCarByChecked(features, uncheckedCarIds) {
@@ -539,10 +533,10 @@ export function filterCarByChecked(features, uncheckedCarIds) {
 
 
 export async function deleteViolateInfoById(id) {
-  const {data} = await axios.get(deleteViolateInfoByIdApi, {
+  const { data } = await axios.get(deleteViolateInfoByIdApi, {
     params: {
       id,
-    }
-  })
+    },
+  });
   return data;
 }
