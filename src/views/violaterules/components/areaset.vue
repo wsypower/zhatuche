@@ -123,6 +123,9 @@ export default {
       },
       deep: true,
     },
+    addEditDialogVisible(val) {
+      this.updataMap();
+    },
   },
   mounted() {
     this.getAreaListData();

@@ -83,10 +83,6 @@ export default {
       type: Number,
       default: 1,
     },
-    optType: {
-      type: String,
-      default: 'add',
-    },
     updataLayer: null,
   },
   data() {
@@ -114,6 +110,7 @@ export default {
       limitSpeed: null,
       mapId: null,
       failCount: 0,
+      optType: null,
     };
   },
   computed: {
@@ -138,12 +135,12 @@ export default {
         visible: false,
         disabled: false,
       },
-      {
-        name: '保存',
-        icon: require('@/assets/save.png'),
-        visible: false,
-        disabled: false,
-      },
+      // {
+      //   name: '保存',
+      //   icon: require('@/assets/save.png'),
+      //   visible: false,
+      //   disabled: false,
+      // },
     ];
     switch (this.editType) {
       case 1:
@@ -241,12 +238,12 @@ export default {
             },
           });
           break;
-        case '保存':
-          mapManager.inactivateDraw(this.draw);// 取消绘制
-          console.log('uuid', this.generateUUID().replace(/-/g, ''));
-          console.log(this.drawFeature);
-          this.mapDataSave();
-          break;
+        // case '保存':
+        //   mapManager.inactivateDraw(this.draw);// 取消绘制
+        //   console.log('uuid', this.generateUUID().replace(/-/g, ''));
+        //   console.log(this.drawFeature);
+        //   this.mapDataSave();
+        //   break;
         default:
           break;
       }
@@ -256,7 +253,6 @@ export default {
       const drawItem = mapManager.activateDraw(this.draw, type, this.source, editStyle());
       this.draw = drawItem[0];
       this.source = drawItem[1];
-      debugger;
       const _this = this;
       this.draw.on('drawend', (e) => {
         const { feature } = e;
@@ -307,6 +303,7 @@ export default {
       console.log('确定保存');
       console.log(e);
       this.mapDataSave();
+      mapManager.inactivateDraw(this.draw);// 取消绘制
       if (this.failCount > 0) {
         this.$message.error('图形数据保存失败，请重试！');
       } else {
