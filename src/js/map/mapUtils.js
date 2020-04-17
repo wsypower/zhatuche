@@ -4,7 +4,6 @@
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import LineString from 'ol/geom/LineString';
-
 /**
  * 根据点位信息生成features
  * @param  {[type]} points [description]
@@ -88,8 +87,6 @@ export function genTrackFeaturesByLocationList(track) {
   }
   return features;
 }
-
-
 export function findPosition(curTime, trackCoordinates) {
   let index = 0;
   // debugger;
@@ -173,4 +170,25 @@ function linear(initPos, targetPos, currentCount, count) {
   const t = currentCount;
   const d = count;
   return c * t / d + b;
+}
+
+/**
+ * @description:过滤出图形id
+ * @author:sijianting
+ * @createDate:2019/8/14 10:57
+ */
+export function filterMapId(data) {
+  // 面查询idlist
+  let ids;
+  if (data.length > 0) {
+    ids = '(';
+    for (let i = 0; i < data.length; i++) {
+      ids += `'${data[i].locationId}'`;
+      if (i + 1 < data.length) {
+        ids += ',';
+      }
+    }
+    ids += ')';
+  }
+  return ids;
 }

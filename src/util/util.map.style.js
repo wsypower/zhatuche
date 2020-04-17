@@ -247,3 +247,25 @@ export function editStyle() {
     }),
   });
 }
+/**
+ * @description:突出图形样式
+ * @author:sijianting
+ * @createDate:2019/9/25 11:16
+ */
+export function showItemStyle() {
+  return new Style({
+    fill: new Fill({
+      color: 'rgba(34,139,34, 0.3)',
+    }),
+    stroke: new Stroke({
+      color: '#FF0000',
+      width: 3,
+    }),
+    image: new CircleStyle({
+      radius: 7,
+      fill: new Fill({
+        color: '#FF0000',
+      }),
+    }),
+  });
+}

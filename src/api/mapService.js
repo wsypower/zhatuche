@@ -6,11 +6,13 @@ import GeoJSON from 'ol/format/GeoJSON';
 const postGISDataAPI = `${URL_CONFIG.gisURL}/geoserver/${MAP_CONFIG.featurePrefix}/wfs`;
 const getGISDataAPI = `${URL_CONFIG.gisURL}/geoserver/${MAP_CONFIG.featurePrefix}/ows`;
 
+// 根据id和类型获取数据
 function getData(id, featureType, projectType) {
   let type;
-  if (featureType == 'Point') {
-    type = `${MAP_CONFIG.featurePrefix}:${MAP_CONFIG.pointTable}`;
-  } else if (featureType == 'LineString') {
+  // if (featureType == 'Point') {
+  //   type = `${MAP_CONFIG.featurePrefix}:${MAP_CONFIG.pointTable}`;
+  // } else
+  if (featureType == 'LineString') {
     type = `${MAP_CONFIG.featurePrefix}:${MAP_CONFIG.lineTable}`;
   } else if (featureType == 'Polygon') {
     type = `${MAP_CONFIG.featurePrefix}:${MAP_CONFIG.polygonTable}`;
@@ -26,6 +28,29 @@ function getData(id, featureType, projectType) {
     },
   });
 }
+// 根据id组和类型获取数据
+function getDataByIds(ids, featureType, projectType) {
+  let type;
+  // if (featureType == 'Point') {
+  //   type = `${MAP_CONFIG.featurePrefix}:${MAP_CONFIG.pointTable}`;
+  // } else
+  if (featureType == 'LineString') {
+    type = `${MAP_CONFIG.featurePrefix}:${MAP_CONFIG.lineTable}`;
+  } else if (featureType == 'Polygon') {
+    type = `${MAP_CONFIG.featurePrefix}:${MAP_CONFIG.polygonTable}`;
+  }
+  return axios.get(getGISDataAPI, {
+    params: {
+      service: 'WFS',
+      version: '1.0.0',
+      request: 'GetFeature',
+      typeName: type,
+      outputFormat: 'application/json',
+      cql_filter: `"id" in ${ids} and "type" = '${projectType}'`,
+    },
+  });
+}
+
 
 /**
  * @description:保存绘制数据到gis数据库
@@ -48,7 +73,7 @@ export async function postFeatures(drawType, feature, postType) {
       featureType = `${MAP_CONFIG.polygonTable}`;
       break;
     default:
-      featureType = `${MAP_CONFIG.pointTable}`;
+      featureType = `${MAP_CONFIG.lineTable}`;
       break;
   }
   const obj = {
@@ -102,11 +127,11 @@ export async function getFeatures(id, type) {
   let pointFeature;
   let lineFeature;
   let PolygonFeature;
-  const data1 = await getData(id, 'Point', type);
-  if (data1.data.features && data1.data.features.length > 0) {
-    pointFeature = new GeoJSON().readFeatures(data1.data);
-    features = features.concat(pointFeature);
-  }
+  // const data1 = await getData(id, 'Point', type);
+  // if (data1.data.features && data1.data.features.length > 0) {
+  //   pointFeature = new GeoJSON().readFeatures(data1.data);
+  //   features = features.concat(pointFeature);
+  // }
   const data2 = await getData(id, 'LineString', type);
   if (data2.data.features && data2.data.features.length > 0) {
     lineFeature = new GeoJSON().readFeatures(data2.data);
@@ -119,6 +144,67 @@ export async function getFeatures(id, type) {
   }
   const typeFeature = {
     point: pointFeature,
+    line: lineFeature,
+    polygon: PolygonFeature,
+  };
+  return [features, typeFeature];
+}
+/**
+ * @description:根据id组获取gis数据库数据
+ * @param type 编辑的类型：add,edit,delete
+ * @param ids 保存的图形类型：Point,LineString,Polygon
+ * @author: sijianting
+ */
+export async function getFeaturesByIds(ids, type) {
+  let features = [];
+  // let pointFeature;
+  let lineFeature;
+  let PolygonFeature;
+  // const data1 = await getData(id, 'Point', type);
+  // if (data1.data.features && data1.data.features.length > 0) {
+  //   pointFeature = new GeoJSON().readFeatures(data1.data);
+  //   features = features.concat(pointFeature);
+  // }
+  const data2 = await getDataByIds(ids, 'LineString', type);
+  if (data2.data.features && data2.data.features.length > 0) {
+    lineFeature = new GeoJSON().readFeatures(data2.data);
+    features = features.concat(lineFeature);
+  }
+  const data3 = await getDataByIds(ids, 'Polygon', type);
+  if (data3.data.features && data3.data.features.length > 0) {
+    PolygonFeature = new GeoJSON().readFeatures(data3.data);
+    features = features.concat(PolygonFeature);
+  }
+  // const typeFeature = {
+  //   // point: pointFeature,
+  //   line: lineFeature,
+  //   polygon: PolygonFeature,
+  // };
+  return features;
+  // return [features, typeFeature];
+}
+
+
+/**
+ * @description:根据id组获取gis数据库数据
+ * @param id 保存的图形类型：Point,LineString,Polygon
+ * @author: sijianting
+ */
+export async function getAllFeatures(ids) {
+  let features = [];
+  let lineFeature;
+  let PolygonFeature;
+  const data2 = await getData(id, 'LineString', type);
+  if (data2.data.features && data2.data.features.length > 0) {
+    lineFeature = new GeoJSON().readFeatures(data2.data);
+    features = features.concat(lineFeature);
+  }
+  const data3 = await getData(id, 'Polygon', type);
+  if (data3.data.features && data3.data.features.length > 0) {
+    PolygonFeature = new GeoJSON().readFeatures(data3.data);
+    features = features.concat(PolygonFeature);
+  }
+  const typeFeature = {
     line: lineFeature,
     polygon: PolygonFeature,
   };

@@ -28,23 +28,23 @@
         <!-- 输入区域信息 -->
         <div class="edit-input">
           <!-- 越界行驶 -->
-          <a-card title="区域命名：" bordered="false" style="width: 250px" v-if="editType=='yjxs'">
-            <a-input size="middle" placeholder="请输入区域名称" />
+          <a-card title="区域命名：" style="width: 250px" v-if="editType==1">
+            <a-input v-model="areaName" placeholder="请输入区域名称" />
           </a-card>
           <!--禁行路段-->
-          <a-card title="禁行路段命名：" bordered="false" style="width: 250px" v-if="editType=='jxld'">
-            <a-input size="middle" placeholder="请输入路段名称" />
+          <a-card title="禁行路段命名：" style="width: 250px" v-if="editType==2">
+            <a-input v-model="areaName" placeholder="请输入路段名称" />
           </a-card>
           <!--指定路段-->
-          <a-card title="指定路段命名：" bordered="false" style="width: 250px" v-if="editType=='zdld'">
-            <a-input size="middle" placeholder="请输入指定路段名称" />
+          <a-card title="指定路段命名：" style="width: 250px" v-if="editType==3">
+            <a-input v-model="areaName" placeholder="请输入指定路段名称" />
           </a-card>
           <!--限速区域-->
-          <a-card title="限速区域命名：" bordered="false" style="width: 250px" v-if="editType=='csxd'">
-            <a-input size="middle" placeholder="请输入区域名称" />
+          <a-card title="限速区域命名：" style="width: 250px" v-if="editType==4">
+            <a-input v-model="areaName" placeholder="请输入区域名称" />
             <p style="padding: 10px;font-size: 16px">限速（公里/小时）</p>
             <!--<a-input size="middle" placeholder="请输入限速值" />-->
-            <a-input-number size="middle" id="inputNumber" :min="0" v-model="limitSpeed" />
+            <a-input-number id="inputNumber" :min="0" v-model="limitSpeed" />
           </a-card>
         </div>
       </div>
@@ -55,6 +55,7 @@ import LayoutMap from '@/views/violaterules/map/olMap.vue';
 import MapManager from '@/js/map/MapManager';
 import { editStyle } from '@/util/util.map.style';
 import { addEditAreaOrLine } from '@/api/vrules';
+import { postFeatures, getFeatures } from '@/api/mapService';
 
 let map;
 let mapManager;
@@ -79,13 +80,14 @@ export default {
       },
     },
     editType: {
-      type: String,
-      default: 'yjxs',
+      type: Number,
+      default: 1,
     },
     optType: {
       type: String,
       default: 'add',
     },
+    updataLayer: null,
   },
   data() {
     return {
@@ -109,7 +111,9 @@ export default {
         },
       },
       areaName: null,
-      limitSpeed: 0,
+      limitSpeed: null,
+      mapId: null,
+      failCount: 0,
     };
   },
   computed: {
@@ -142,16 +146,16 @@ export default {
       },
     ];
     switch (this.editType) {
-      case 'yjxs':
+      case 1:
         this.btnArr.splice(0, 1);
         break;
-      case 'jxld':
+      case 2:
         this.btnArr.splice(1, 1);
         break;
-      case 'zdld':
+      case 3:
         this.btnArr.splice(1, 1);
         break;
-      case 'csxd':
+      case 4:
         break;
       default:
         break;
@@ -177,6 +181,23 @@ export default {
       this.$nextTick().then(() => {
         map = this.$refs.editMap.getMap();
         mapManager = new MapManager(map);
+        this.mapId = this.generateUUID().replace(/-/g, '');
+        this.areaName = this.areaObj.areaName;
+        // 编辑状态,将已保存的数据gis数据显示出来
+        const _this = this;
+        if(this.areaObj.areaId) {
+          getFeatures(this.areaObj.locationId, this.editType).then((points) => {
+            _this.initFeatures = points[0];
+            if (points[0].length > 0) {
+              _this.optType = 'update';
+              _this.updateLayer = mapManager.addVectorLayerByFeatures(points[0], editStyle(), 2);
+              map.getView().fit(_this.updateLayer.getSource().getExtent());
+            } else {
+              _this.optType = 'add';
+            }
+            _this.updateData = points[1];
+          });
+        }
       });
     },
     // 编辑按钮事件
@@ -190,6 +211,7 @@ export default {
           break;
         case '清空':
           mapManager.inactivateDraw(this.draw);// 取消绘制
+          const _this=this;
           this.$confirm({
             title: '是否确定清空当前所有图形?',
             content: '当前操作将会清空地图上所有绘制的图形',
@@ -197,11 +219,21 @@ export default {
             okType: 'danger',
             cancelText: '取消',
             onOk() {
-              this.source && this.source.clear();
-              this.drawFeature = {
-                point: [],
-                line: [],
-                polygon: [],
+              _this.updateLayer && _this.updateLayer.getSource().clear();
+              _this.source && _this.source.clear();
+              _this.drawFeature = {
+                point: {
+                  add: [],
+                  delete: _this.updateData.point ? _this.updateData.point : [],
+                },
+                line: {
+                  add: [],
+                  delete: _this.updateData.line ? _this.updateData.line : [],
+                },
+                polygon: {
+                  add: [],
+                  delete: _this.updateData.polygon ? _this.updateData.polygon : [],
+                },
               };
             },
             onCancel() {
@@ -211,8 +243,9 @@ export default {
           break;
         case '保存':
           mapManager.inactivateDraw(this.draw);// 取消绘制
-          console.log('uuid',this.generateUUID().replace(/-/g, ""));
+          console.log('uuid', this.generateUUID().replace(/-/g, ''));
           console.log(this.drawFeature);
+          this.mapDataSave();
           break;
         default:
           break;
@@ -223,9 +256,12 @@ export default {
       const drawItem = mapManager.activateDraw(this.draw, type, this.source, editStyle());
       this.draw = drawItem[0];
       this.source = drawItem[1];
+      debugger;
       const _this = this;
       this.draw.on('drawend', (e) => {
         const { feature } = e;
+        feature.set('id', _this.mapId);
+        feature.set('type', _this.editType);
         const geoType = feature.getGeometry().getType();
         if (geoType == 'Point') {
           _this.drawFeature.point.add.push(feature);
@@ -236,37 +272,73 @@ export default {
         }
       });
     },
-    handleSave(e) {
-      console.log('确定保存');
-      console.log(e);
-      const tempArea = {
-        id: '',
-        type: this.areaObj.type,
-        locationId: '',
-        name: '',
-        speed: '',
-      };
-      // 通过areaId判断是新增还是编辑
-      if (this.areaObj.areaId) {
-        tempArea.id = this.areaObj.areaId;
-        tempArea.locationId = 'jgjhgfsdhfgjsd';
-        tempArea.name = '修改的区域';
-      } else {
-        tempArea.locationId = '1254sdkfig';
-        tempArea.name = '新增的区域A';
+    // 保存地图数据
+    mapDataSave() {
+      // if (this.drawFeature.point.add.length > 0 || this.drawFeature.point.delete.length > 0) {
+      //   this.postData('Point', this.drawFeature.point);
+      // }
+      if (this.drawFeature.line.add.length > 0 || this.drawFeature.line.delete.length > 0) {
+        this.postData('LineString', this.drawFeature.line);
       }
-
-      addEditAreaOrLine(tempArea).then((data) => {
-        if (data.code === 0) {
-          this.$message.success('保存成功！！！');
-          this.addEditDialogVisible = false;
-          this.$emit('refreshList');
+      if (this.drawFeature.polygon.add.length > 0 || this.drawFeature.polygon.delete.length > 0) {
+        this.postData('Polygon', this.drawFeature.polygon);
+      }
+      // if (this.failCount > 0) {
+      //   this.$message.error('保存失败，请重试！');
+      // } else {
+      //   // this.$message.success('保存成功！');
+      // }
+    },
+    // 推送图形数据到gis数据库
+    postData(type, data) {
+      const _this = this;
+      postFeatures(type, data, this.optType).then((res) => {
+        const xmlDoc = (new DOMParser()).parseFromString(res.data, 'text/xml');
+        const insertNum = xmlDoc.getElementsByTagName('wfs:totalInserted')[0].textContent;
+        const deleteNum = xmlDoc.getElementsByTagName('wfs:totalDeleted')[0].textContent;
+        if (insertNum > 0 || deleteNum > 0) {
+          console.log('===保存成功====');
         } else {
-          this.$message.error('保存失败，请检查！！！');
+          _this.failCount += 1;
         }
       });
     },
-    // 生成uuid
+    handleSave(e) {
+      console.log('确定保存');
+      console.log(e);
+      this.mapDataSave();
+      if (this.failCount > 0) {
+        this.$message.error('图形数据保存失败，请重试！');
+      } else {
+        // this.$message.success('保存成功！');
+        const tempArea = {
+          id: '',
+          type: this.areaObj.type,
+          locationId: '',
+          name: '',
+          speed: '',
+        };
+        // 通过areaId判断是新增还是编辑
+        if (this.areaObj.areaId) {
+          tempArea.id = this.areaObj.areaId;
+          tempArea.locationId = this.mapId;
+          tempArea.name = this.areaName;
+        } else {
+          tempArea.locationId = this.mapId;
+          tempArea.name = this.areaName;
+        }
+        addEditAreaOrLine(tempArea).then((data) => {
+          if (data.code === 0) {
+            this.$message.success('保存成功！！！');
+            this.addEditDialogVisible = false;
+            this.$emit('refreshList');
+          } else {
+            this.$message.error('区域名称保存失败，请检查！！！');
+          }
+        });
+      }
+    },
+    // 生成地图唯一标识
     generateUUID() {
       let d = new Date().getTime();
       if (window.performance && typeof window.performance.now === 'function') {

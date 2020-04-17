@@ -8,7 +8,9 @@
       <div class="page-body">
         <a-tabs v-model="activeTab" @change="changeTab" class="content_tab">
           <a-tab-pane tab="越界行驶" key="1">
-            <area-set ref="yjxs" :typeNumber="1" @openBindCarPage="openBindCarPage"></area-set>
+            <area-set ref="yjxs" :typeNumber="1"
+                      :mapManager="mapManager"
+                      @openBindCarPage="openBindCarPage"></area-set>
           </a-tab-pane>
           <a-tab-pane tab="禁行路段" key="2">
             <area-set ref="jxld" :typeNumber="2" @openBindCarPage="openBindCarPage"></area-set>
@@ -27,7 +29,9 @@
         <span @click="closeBindPage"><< 保存并返回</span>
         <span>{{areaName}}</span>
       </div>
-      <bind-car :typeNumber="typeNumber" :areaId="areaId" :bindCarIdArr="bindCarIdArr" @getBindCarIdData="getBindCarIdData"></bind-car>
+      <bind-car :typeNumber="typeNumber" :areaId="areaId"
+                :bindCarIdArr="bindCarIdArr"
+                @getBindCarIdData="getBindCarIdData"></bind-car>
     </div>
     <!-- 地图 -->
     <LayoutMap ref="olMap"></LayoutMap>
@@ -38,16 +42,11 @@
 import { mapState } from 'vuex';
 import LayoutMap from '@/views/map/olMap.vue';
 import MapManager from '@/js/map/MapManager';
-import { editStyle } from '@/util/util.map.style';
-import { findPosition, genPointByCoord } from '@/js/map/mapUtils';
-import {
-  getCarList, getCarStateCount, filterCar, getCarByCarCode, getCarInfoByCarId,
-} from '@/api/service';
 import { saveBindCarsList } from '@/api/vrules';
 import AreaSet from './components/areaset.vue';
 import BindCar from './components/bindcar.vue';
 
-
+let map;
 export default {
   name: 'vrules',
   components: {
@@ -70,6 +69,7 @@ export default {
       bindCarIdArr: [],
       // 保存时已绑定的车辆的ID数组
       saveBindCarIdArr: [],
+      mapManager: null,
     };
   },
   computed: {
@@ -81,6 +81,10 @@ export default {
   },
   mounted() {
     this.$nextTick().then(() => {
+      map = this.$refs.olMap.getMap();
+      console.log('map', map);
+      this.mapManager = new MapManager(map);
+      console.log('mapManager', this.mapManager);
     });
   },
   methods: {

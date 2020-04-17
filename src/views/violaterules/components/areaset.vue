@@ -12,13 +12,19 @@
     <div class="area-page-body">
       <my-scroll>
         <div class="area-page-body-total" flex="dir:left cross:center main:justify">
-          <a-checkbox :indeterminate="indeterminate" @change="onCheckAllChange" v-model="checkAll">全部区域({{totalSize}})</a-checkbox>
+          <div class="total-left">
+            <a-checkbox :indeterminate="indeterminate" @change="onCheckAllChange" v-model="checkAll"></a-checkbox>
+            <span class="box-label">全部区域({{totalSize}})</span>
+          </div>
           <a-icon type="delete" @click="deleteCheckedArea"/>
         </div>
         <div class="area-page-body-item"
              flex="dir:left cross:center main:justify"
              v-for="(area, index) in areaList" :key="index" v-show="area.areaName.indexOf(content)>=0">
-          <a-checkbox @change="onCheckChange(index)" v-model="area.checked"><span class="box-label">{{area.areaName}}{{area.speed}}</span></a-checkbox>
+          <div class="item-left">
+            <a-checkbox @change="onCheckChange(index)" v-model="area.checked"></a-checkbox>
+            <span class="box-label" @click="showItemLayer(index)">{{area.areaName}}{{area.speed}}</span>
+          </div>
           <span class="text-btn" v-if="typeNumber!==4" @click="openBindCarPage(area.areaId, area.areaName,area.carIdList)">绑定({{area.carIdList.length}})</span>
           <span class="opt-btns">
             <a-icon type="edit" @click="editItem(index)"/>
@@ -32,14 +38,17 @@
     <add-edit-dialog :visible.sync="addEditDialogVisible"
                      :dialogTitle="modalTitle"
                      :areaObj="areaInfo"
-                     :editType="type"
+                     :editType="typeNumber"
                      :optType="optType"
                      @refreshList="getAreaListData">
     </add-edit-dialog>
   </div>
 </template>
 <script type="text/ecmascript-6">
+import { mapState } from 'vuex';
 import { getAreaOrLineList, deleteAreaOrLine } from '@/api/vrules';
+import { getFeaturesByIds, getFeatures } from '@/api/mapService';
+import { editStyle, showItemStyle } from '@/util/util.map.style';
 import AddEditDialog from './addeditdialog.vue';
 
 export default {
@@ -64,9 +73,16 @@ export default {
       optType: 'add',
       addEditDialogVisible: false,
       areaInfo: {},
+      ids: null,
+      allDataLayer: null,
+      itemLayer: null,
+      partDataLayer: null,
     };
   },
   computed: {
+    ...mapState([
+      'mapManager',
+    ]),
     modalTitle() {
       if (this.optType === 'add') {
         return this.typeNumber === 1 || this.typeNumber === 4 ? '新增区域' : '新增路段';
@@ -114,14 +130,30 @@ export default {
   methods: {
     // 获取所有区域数据
     getAreaListData() {
+      const _this = this;
       getAreaOrLineList({ type: this.typeNumber, name: this.searchContent }).then((data) => {
         this.areaList = data;
+        console.log('areaList', this.areaList);
         this.areaList.map((item) => {
-          item.checked = false;
+          item.checked = true;
           item.type = this.typeNumber;
           return item;
         });
-        console.log('this.areaList', this.areaList);
+        if (data.length > 0) {
+          this.ids = '(';
+          for (let i = 0; i < data.length; i++) {
+            this.ids += `'${data[i].locationId}'`;
+            if (i + 1 < data.length) {
+              this.ids += ',';
+            }
+          }
+          this.ids += ')';
+        }
+        // 获取所有区域图形
+        getFeaturesByIds(this.ids, _this.typeNumber).then((data) => {
+          _this.allDataLayer = _this.mapManager.addVectorLayerByFeatures(data, editStyle(), 2);
+          _this.mapManager.getMap().getView().fit(_this.allDataLayer.getSource().getExtent());
+        });
       });
     },
     // 搜索
@@ -144,6 +176,7 @@ export default {
           this.$set(this.areaList, index, item);
         });
       }
+      this.updataMap();
     },
     // 删除选中的区域
     deleteCheckedArea() {
@@ -174,9 +207,35 @@ export default {
     },
     // 一个区域的复选框选中状态改变
     onCheckChange(index) {
+      const _this = this;
       console.log('index', index);
       this.$set(this.areaList, index, this.areaList[index]);
       console.log('this.areaList', this.areaList);
+      this.updataMap();
+    },
+    // 区域复选框选中状态变化时改变地图显示区域
+    updataMap() {
+      const _this = this;
+      _this.itemLayer && _this.itemLayer.getSource().clear();
+      _this.allDataLayer && _this.allDataLayer.getSource().clear();
+      // 勾选发生变化后更新地图数据
+      this.ids = '(';
+      let count = 0;
+      for (let i = 0; i < this.areaList.length; i++) {
+        if (this.areaList[i].checked) {
+          count += 1;
+          this.ids += `'${this.areaList[i].locationId}',`;
+        }
+      }
+      if (count > 0) {
+        this.ids = this.ids.substring(0, this.ids.length - 1);
+        this.ids += ')';
+        // 获取所有区域图形
+        getFeaturesByIds(this.ids, this.typeNumber).then((data) => {
+          _this.allDataLayer = _this.mapManager.addVectorLayerByFeatures(data, editStyle(), 2);
+          _this.mapManager.getMap().getView().fit(_this.allDataLayer.getSource().getExtent());
+        });
+      }
     },
     // 新增区域
     addArea() {
@@ -208,6 +267,16 @@ export default {
         } else {
           this.$message.error('删除失败！！！');
         }
+      });
+    },
+    // 显示某个区域
+    showItemLayer(index) {
+      const mapId = this.areaList[index].locationId;
+      const _this = this;
+      _this.itemLayer && _this.itemLayer.getSource().clear();
+      getFeatures(mapId, this.typeNumber).then((points) => {
+        _this.itemLayer = _this.mapManager.addVectorLayerByFeatures(points[0], showItemStyle(), 5);
+        _this.mapManager.getMap().getView().fit(_this.itemLayer.getSource().getExtent());
       });
     },
     // 打开绑定车辆页面
@@ -271,11 +340,15 @@ export default {
           color: #2b90f3;
         }
       }
+      .box-label{
+        margin-left: 5px;
+      }
     }
     .area-page-body-item{
       padding: 5px 10px 5px 30px;
       .box-label{
         display: inline-block;
+        margin-left: 5px;
         width: 120px;
         overflow: hidden;
         white-space: nowrap;
