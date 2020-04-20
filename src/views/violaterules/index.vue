@@ -9,7 +9,6 @@
         <a-tabs v-model="activeTab" @change="changeTab" class="content_tab">
           <a-tab-pane tab="越界行驶" key="1">
             <area-set ref="yjxs" :typeNumber="1"
-                      :mapManager="mapManager"
                       @openBindCarPage="openBindCarPage"></area-set>
           </a-tab-pane>
           <a-tab-pane tab="禁行路段" key="2">
@@ -69,27 +68,62 @@ export default {
       bindCarIdArr: [],
       // 保存时已绑定的车辆的ID数组
       saveBindCarIdArr: [],
-      mapManager: null,
     };
   },
   computed: {
     ...mapState([
-      'isPlayerBarShow',
-      'playerBarOptions',
-      'historyTrack',
+      'mapManager',
     ]),
   },
   mounted() {
     this.$nextTick().then(() => {
-      map = this.$refs.olMap.getMap();
-      console.log('map', map);
-      this.mapManager = new MapManager(map);
-      console.log('mapManager', this.mapManager);
+      // map = this.$refs.olMap.getMap();
+      // console.log('map', map);
+      // this.mapManager = new MapManager(map);
+      // console.log('mapManager', this.mapManager);
     });
   },
   methods: {
-    changeTab() {
+    changeTab(val) {
+      console.log('页面切换', val);
       this.showPage = false;
+      // 清除图层
+      const layers = this.mapManager.getMap().getLayers().array_;
+      const cloneLayer = [...layers];
+      const _this = this;
+      cloneLayer.forEach((l) => {
+        if (l.get('layerType')) {
+          if (val == 1) {
+            if (l.get('layerType') == '1') {
+              l.setVisible(true);
+              _this.mapManager.getMap().getView().fit(l.getSource().getExtent());
+            } else {
+              l.setVisible(false);
+            }
+          } else if (val == 2) {
+            if (l.get('layerType') == '2') {
+              l.setVisible(true);
+              _this.mapManager.getMap().getView().fit(l.getSource().getExtent());
+            } else {
+              l.setVisible(false);
+            }
+          } else if (val == 3) {
+            if (l.get('layerType') == '3') {
+              l.setVisible(true);
+              _this.mapManager.getMap().getView().fit(l.getSource().getExtent());
+            } else {
+              l.setVisible(false);
+            }
+          } else if (val == 4) {
+            if (l.get('layerType') == '4') {
+              l.setVisible(true);
+              _this.mapManager.getMap().getView().fit(l.getSource().getExtent());
+            } else {
+              l.setVisible(false);
+            }
+          }
+        }
+      });
     },
     // 打开绑定车辆页面
     openBindCarPage(data) {

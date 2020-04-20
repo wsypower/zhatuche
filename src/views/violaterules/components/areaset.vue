@@ -123,9 +123,9 @@ export default {
       },
       deep: true,
     },
-    addEditDialogVisible(val) {
-      this.updataMap();
-    },
+    // addEditDialogVisible(val) {
+    //   // this.updataMap();
+    // },
   },
   mounted() {
     this.getAreaListData();
@@ -142,21 +142,22 @@ export default {
           item.type = this.typeNumber;
           return item;
         });
-        if (data.length > 0) {
-          this.ids = '(';
-          for (let i = 0; i < data.length; i++) {
-            this.ids += `'${data[i].locationId}'`;
-            if (i + 1 < data.length) {
-              this.ids += ',';
-            }
-          }
-          this.ids += ')';
-        }
-        // 获取所有区域图形
-        getFeaturesByIds(this.ids, _this.typeNumber).then((data) => {
-          _this.allDataLayer = _this.mapManager.addVectorLayerByFeatures(data, editStyle(), 2);
-          _this.mapManager.getMap().getView().fit(_this.allDataLayer.getSource().getExtent());
-        });
+        _this.updataMap();
+        // if (data.length > 0) {
+        //   this.ids = '(';
+        //   for (let i = 0; i < data.length; i++) {
+        //     this.ids += `'${data[i].locationId}'`;
+        //     if (i + 1 < data.length) {
+        //       this.ids += ',';
+        //     }
+        //   }
+        //   this.ids += ')';
+        // }
+        // // 获取所有区域图形
+        // getFeaturesByIds(this.ids, _this.typeNumber).then((data) => {
+        //   _this.allDataLayer = _this.mapManager.addVectorLayerByFeatures(data, editStyle(), 2);
+        //   _this.mapManager.getMap().getView().fit(_this.allDataLayer.getSource().getExtent());
+        // });
       });
     },
     // 搜索
@@ -220,7 +221,6 @@ export default {
     updataMap() {
       const _this = this;
       _this.itemLayer && _this.itemLayer.getSource().clear();
-      _this.allDataLayer && _this.allDataLayer.getSource().clear();
       // 勾选发生变化后更新地图数据
       this.ids = '(';
       let count = 0;
@@ -235,7 +235,13 @@ export default {
         this.ids += ')';
         // 获取所有区域图形
         getFeaturesByIds(this.ids, this.typeNumber).then((data) => {
-          _this.allDataLayer = _this.mapManager.addVectorLayerByFeatures(data, editStyle(), 2);
+          if(_this.allDataLayer){
+            _this.allDataLayer.getSource().clear();
+            _this.allDataLayer.getSource().addFeatures(data);
+          }else{
+            _this.allDataLayer = _this.mapManager.addVectorLayerByFeatures(data, editStyle(), 2);
+            _this.allDataLayer.set('layerType',_this.typeNumber);
+          }
           _this.mapManager.getMap().getView().fit(_this.allDataLayer.getSource().getExtent());
         });
       }

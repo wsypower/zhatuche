@@ -182,7 +182,7 @@ export default {
         this.areaName = this.areaObj.areaName;
         // 编辑状态,将已保存的数据gis数据显示出来
         const _this = this;
-        if(this.areaObj.areaId) {
+        if (this.areaObj.areaId) {
           getFeatures(this.areaObj.locationId, this.editType).then((points) => {
             _this.initFeatures = points[0];
             if (points[0].length > 0) {
@@ -194,6 +194,8 @@ export default {
             }
             _this.updateData = points[1];
           });
+        } else {
+          _this.optType = 'add';
         }
       });
     },
@@ -208,7 +210,7 @@ export default {
           break;
         case '清空':
           mapManager.inactivateDraw(this.draw);// 取消绘制
-          const _this=this;
+          const _this = this;
           this.$confirm({
             title: '是否确定清空当前所有图形?',
             content: '当前操作将会清空地图上所有绘制的图形',
@@ -250,13 +252,19 @@ export default {
     },
     // 绘制事件
     drawEndFeature(type) {
+      this.source = null;
+      console.log(this.source);
       const drawItem = mapManager.activateDraw(this.draw, type, this.source, editStyle());
       this.draw = drawItem[0];
       this.source = drawItem[1];
       const _this = this;
       this.draw.on('drawend', (e) => {
         const { feature } = e;
-        feature.set('id', _this.mapId);
+        if (this.areaObj.areaId) {
+          feature.set('id', _this.areaObj.locationId);
+        } else {
+          feature.set('id', _this.mapId);
+        }
         feature.set('type', _this.editType);
         const geoType = feature.getGeometry().getType();
         if (geoType == 'Point') {
@@ -318,7 +326,7 @@ export default {
         // 通过areaId判断是新增还是编辑
         if (this.areaObj.areaId) {
           tempArea.id = this.areaObj.areaId;
-          tempArea.locationId = this.mapId;
+          tempArea.locationId = this.areaObj.locationId;
           tempArea.name = this.areaName;
         } else {
           tempArea.locationId = this.mapId;
