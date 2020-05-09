@@ -103,6 +103,7 @@ export default {
         this.treeData[0].title = `全部(${this.totalSize})`;
         this.checkedKeys = [...this.bindCarIdArr];
         this.expandedKeys = [...this.bindCarIdArr];
+        this.onCheck();
         setTimeout(() => {
           this.showLoading = false;
         }, 1000);

@@ -235,12 +235,12 @@ export default {
         this.ids += ')';
         // 获取所有区域图形
         getFeaturesByIds(this.ids, this.typeNumber).then((data) => {
-          if(_this.allDataLayer){
+          if (_this.allDataLayer) {
             _this.allDataLayer.getSource().clear();
             _this.allDataLayer.getSource().addFeatures(data);
-          }else{
+          } else {
             _this.allDataLayer = _this.mapManager.addVectorLayerByFeatures(data, editStyle(), 2);
-            _this.allDataLayer.set('layerType',_this.typeNumber);
+            _this.allDataLayer.set('layerType', _this.typeNumber);
           }
           _this.mapManager.getMap().getView().fit(_this.allDataLayer.getSource().getExtent());
         });
