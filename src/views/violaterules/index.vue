@@ -172,7 +172,8 @@ export default {
 <style scoped lang="stylus">
   .page
     width 100%
-    height 100%
+    height calc(100% - 60px)
+    position relative
     #map
       position relative
 </style>
