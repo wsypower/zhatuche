@@ -306,7 +306,7 @@ export default {
   .modalwrap{
     top:10px;
     left:10px;
-    height: calc(100% - 80px);
+    height: calc(100% - 20px);
     width: calc(100% - 20px);
     .ant-modal-content {
       height: 100%;
