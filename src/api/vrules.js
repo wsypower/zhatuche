@@ -16,7 +16,7 @@ const saveBindCarsListAPI = `${URL_CONFIG.vRulesURL}/unauthorized/area/bindCarBy
 *  获取区域获取路线列表接口
 * */
 export async function getAreaOrLineList(obj) {
-  const { data } = await axios.get(`${getAreaOrLineListAPI}?type=${obj.type}&name=${obj.name}`);
+  const { data } = await axios.get(`${getAreaOrLineListAPI}?type=${obj.type}&name=${obj.name}&_t=${new Date().getTime()}`);
   console.log('getAreaOrLineList', data);
   return data.result;
 }
@@ -42,7 +42,7 @@ export async function deleteAreaOrLine(deleteObj) {
 *  获取全部车辆接口
 * */
 export async function getAllCarTreeData(params) {
-  const { data } = await axios.get(`${getAllCarTreeDataAPI}?type=${params.type}&areaId=${params.areaId}`);
+  const { data } = await axios.get(`${getAllCarTreeDataAPI}?type=${params.type}&areaId=${params.areaId}&_t=${new Date().getTime()}`);
   return [data.result];
 }
 

@@ -23,7 +23,10 @@
              v-for="(area, index) in areaList" :key="index" v-show="area.areaName.indexOf(content)>=0">
           <div class="item-left">
             <a-checkbox @change="onCheckChange(index)" v-model="area.checked"></a-checkbox>
-            <span class="box-label" @click="showItemLayer(index)">{{area.areaName}}{{area.speed}}</span>
+            <div class="box-label" :class="{w200: typeNumber===4}" @click="showItemLayer(index)">
+              {{area.areaName}}
+              <span v-if="typeNumber===4&&area.speed&&area.speed.length>0">({{area.speed}}公里/时)</span>
+            </div>
           </div>
           <span class="text-btn" v-if="typeNumber!==4" @click="openBindCarPage(area.areaId, area.areaName,area.carIdList)">绑定({{area.carIdList.length}})</span>
           <span class="opt-btns">
@@ -363,6 +366,9 @@ export default {
         white-space: nowrap;
         text-overflow: ellipsis;
         vertical-align: middle;
+        &.w200{
+          width: 200px;
+        }
       }
       .text-btn{
         font-family: PingFang-SC-Medium;

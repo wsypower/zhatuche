@@ -180,6 +180,9 @@ export default {
         mapManager = new MapManager(map);
         this.mapId = this.generateUUID().replace(/-/g, '');
         this.areaName = this.areaObj.areaName;
+        if (this.editType === 4) {
+          this.limitSpeed = this.areaObj.speed;
+        }
         // 编辑状态,将已保存的数据gis数据显示出来
         const _this = this;
         if (this.areaObj.areaId) {
@@ -327,10 +330,12 @@ export default {
         if (this.areaObj.areaId) {
           tempArea.id = this.areaObj.areaId;
           tempArea.locationId = this.areaObj.locationId;
-          tempArea.name = this.areaName;
         } else {
           tempArea.locationId = this.mapId;
-          tempArea.name = this.areaName;
+        }
+        tempArea.name = this.areaName;
+        if (this.editType === 4) {
+          tempArea.speed = this.limitSpeed;
         }
         addEditAreaOrLine(tempArea).then((data) => {
           if (data.code === 0) {
