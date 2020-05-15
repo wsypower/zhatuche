@@ -89,7 +89,6 @@ export function genTrackFeaturesByLocationList(track) {
 }
 export function findPosition(curTime, trackCoordinates) {
   let index = 0;
-  // debugger;
   if (trackCoordinates && trackCoordinates.length > 1) {
     if (curTime < trackCoordinates[0].cCreatetime) {
       index = 0;

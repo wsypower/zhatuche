@@ -102,7 +102,6 @@ export async function getCarTree(type) {
           icon = errlCar;
           state = 'err';
         } else {
-          // debugger;
           icon = norlCar;
           state = 'normal';
         }

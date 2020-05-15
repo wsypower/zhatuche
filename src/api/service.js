@@ -64,7 +64,6 @@ const fieldMapping = {
   疑似偷盗: 'doubtsteal',
 };
 export function filterCar(carFeature, selectedStates) {
-  // debugger;
   let filterCarFeatures;
   if (selectedStates.includes('全部状态')) {
     filterCarFeatures = carFeature;

@@ -247,6 +247,8 @@ export default {
           }
           _this.mapManager.getMap().getView().fit(_this.allDataLayer.getSource().getExtent());
         });
+      } else {
+        _this.allDataLayer && _this.allDataLayer.getSource().clear();
       }
     },
     // 新增区域

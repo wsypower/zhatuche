@@ -311,8 +311,6 @@ export default {
       });
     },
     handleSave(e) {
-      console.log('确定保存');
-      console.log(e);
       this.mapDataSave();
       mapManager.inactivateDraw(this.draw);// 取消绘制
       if (this.failCount > 0) {
