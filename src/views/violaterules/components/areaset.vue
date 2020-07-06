@@ -106,21 +106,23 @@ export default {
     areaList: {
       handler(newObj, oldObj) {
         console.log('handler');
-        const num = newObj.reduce((acc, item, arr) => {
-          if (item.checked) {
-            acc += 1;
-          }
-          return acc;
-        }, 0);
-        if (num > 0 && num < this.totalSize) {
-          this.indeterminate = true;
-          this.checkAll = false;
-        } else {
-          this.indeterminate = false;
-          if (num === this.totalSize) {
-            this.checkAll = true;
-          } else {
+        if (newObj) {
+          const num = newObj.reduce((acc, item, arr) => {
+            if (item.checked) {
+              acc += 1;
+            }
+            return acc;
+          }, 0);
+          if (num > 0 && num < this.totalSize) {
+            this.indeterminate = true;
             this.checkAll = false;
+          } else {
+            this.indeterminate = false;
+            if (num === this.totalSize) {
+              this.checkAll = true;
+            } else {
+              this.checkAll = false;
+            }
           }
         }
       },
@@ -290,6 +292,7 @@ export default {
       _this.itemLayer && _this.itemLayer.getSource().clear();
       getFeatures(mapId, this.typeNumber).then((points) => {
         _this.itemLayer = _this.mapManager.addVectorLayerByFeatures(points[0], showItemStyle(), 5);
+        _this.itemLayer.set('layerType', 'item');
         _this.mapManager.getMap().getView().fit(_this.itemLayer.getSource().getExtent());
       });
     },

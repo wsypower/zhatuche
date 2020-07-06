@@ -111,6 +111,8 @@ export default {
       mapId: null,
       failCount: 0,
       optType: null,
+      drawCount: 0,
+      updateData: [],
     };
   },
   computed: {
@@ -189,6 +191,7 @@ export default {
           getFeatures(this.areaObj.locationId, this.editType).then((points) => {
             _this.initFeatures = points[0];
             if (points[0].length > 0) {
+              _this.drawCount = points[0].length;
               _this.optType = 'update';
               _this.updateLayer = mapManager.addVectorLayerByFeatures(points[0], editStyle(), 2);
               map.getView().fit(_this.updateLayer.getSource().getExtent());
@@ -214,6 +217,7 @@ export default {
         case '清空':
           mapManager.inactivateDraw(this.draw);// 取消绘制
           const _this = this;
+          _this.drawCount = 0;
           this.$confirm({
             title: '是否确定清空当前所有图形?',
             content: '当前操作将会清空地图上所有绘制的图形',
@@ -255,6 +259,7 @@ export default {
     },
     // 绘制事件
     drawEndFeature(type) {
+      this.drawCount += 1;
       this.source = null;
       console.log(this.source);
       const drawItem = mapManager.activateDraw(this.draw, type, this.source, editStyle());
@@ -311,6 +316,10 @@ export default {
       });
     },
     handleSave(e) {
+      if (this.drawCount <= 0) {
+        this.$message.error('无法保存，请添加图形数据再保存！');
+        return;
+      }
       this.mapDataSave();
       mapManager.inactivateDraw(this.draw);// 取消绘制
       if (this.failCount > 0) {

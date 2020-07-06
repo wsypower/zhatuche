@@ -35,7 +35,7 @@ export default {
         target: 'mapEdit',
         view: new View({
           projection: 'EPSG:4326',
-          center: [120.82905292510986, 29.591546058654785],
+          center: [116.4770507, 31.7631053],
           zoom: 14,
           maxZoom: 20,
           minZoom: 7,

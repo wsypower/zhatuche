@@ -93,6 +93,9 @@ export default {
       const _this = this;
       cloneLayer.forEach((l) => {
         if (l.get('layerType')) {
+          if(l.get('layerType')=='item'){
+            this.mapManager.removeLayer(l);
+          }
           if (val == 1) {
             if (l.get('layerType') == '1') {
               l.setVisible(true);
